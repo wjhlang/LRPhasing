@@ -15,8 +15,8 @@ A simple and efficient Python script for phasing long reads from a BAM file usin
 
 1.  Clone the repository:
     ```bash
-    git clone [https://github.com/YOUR_USERNAME/haplotype-phaser.git](https://github.com/YOUR_USERNAME/haplotype-phaser.git)
-    cd haplotype-phaser
+    git clone [https://github.com/wjhlang/LRPhasing/]
+    cd LRPhasing
     ```
 
 2.  It is recommended to use a virtual environment:
