@@ -5,7 +5,7 @@ A simple and efficient Python script for phasing long reads from a BAM file usin
 ## Features
 
 -   Phases reads against a VCF file containing phased variants.
--   Handles unphased reads, conflicting reads (spanning SNPs from both haplotypes), and reads with no SNP coverage.
+-   Stringent haplotype assigning, handles unphased reads, conflicting reads (spanning SNPs from both haplotypes), and reads with no SNP coverage.
 -   Extremely lightweight with minimal dependencies (`pysam`).
 -   Two output modes:
     1.  **`separate`**: Creates separate BAM files for Haplotype 1, Haplotype 2, and unphased/conflicting reads.
