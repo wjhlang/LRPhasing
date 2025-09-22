@@ -13,11 +13,6 @@ Given an indexed BAM/CRAM and a tabix-indexed VCF of *phased, heterozygous* SNPs
 
 - Replaced simple counting with a **log10-odds** decision rule.  
 - Supports **quality capping/flooring** (`--q_cap`, `--q_floor`) for platform-aware weighting (e.g., ONT).  
-- **Phase-set aware** by default (`--use_phase_set`), choosing the `PS` block with the strongest evidence.  
-- Explicit outcomes:  
-  - `HP:1` or `HP:2` when \|LLR\| ≥ threshold  
-  - `HP:3` for **conflicting** (both haplotypes observed but \|LLR\| below threshold)  
-  - *Untagged* = **unphased** (too little or one-sided weak evidence)
 
 LLR per SNP uses base error probability from Phred Q:  
 `ε = 10^(-Q/10)`, weight `w = log10((1 − ε) / ε)`.
@@ -110,13 +105,17 @@ All outputs are indexed automatically.
 In **combined** mode, every read goes to `results.phased.bam`.  
 In **separate** mode, routing depends on outcome.
 
-Per-read tags:
-- `HP:i:1` or `HP:i:2` → assigned haplotype  
-- `HP:i:3` → **conflicting** (both haplotypes observed but \|LLR\| < threshold)  
-- *(no `HP`)* → **unphased** (insufficient or one-sided weak evidence)  
-- `NP:i:n` → number of informative SNPs used (when n>0)  
-- `PC:f:x` → \|log10 odds\| confidence  
-- `PS:i:val` → phase-set used (if available and `--use_phase_set`)
+| Case | Tags |
+|---|---|
+| **Haplotype 1** | `HP:i:1`, `NP:i:n`, `PC:f:x`, optional `PS:i:val` |
+| **Haplotype 2** | `HP:i:2`, `NP:i:n`, `PC:f:x`, optional `PS:i:val` |
+| **Conflicting** | `HP:i:3`, `NP:i:n`, `PC:f:x`, optional `PS:i:val` |
+| **Unphased (weak/insufficient evidence)** | **`HP:i:0`**, optional `PS:i:val`; `NP`/`PC` may be present if any evidence was considered |
+| **No-overlap (no SNP overlapped at all)** | **`HP:i:0` only** (no `NP`/`PC`/`PS`) |
+
+**Distinguishing `unphased` vs `no-overlap` when both have `HP:0`:**
+- Likely **no-overlap**: `HP:0` and **no other tags** (`NP`/`PC`/`PS` absent).
+- Likely **unphased**: `HP:0` **and** `NP` and/or `PC` present (and sometimes `PS`).
 
 **Summary** printed to STDOUT includes counts for `hap1`, `hap2`, `conflict`, `unphased`, and `no_overlap`, plus quick histograms for `NP` and `PC`.
 
