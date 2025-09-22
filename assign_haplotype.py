@@ -195,7 +195,7 @@ def main():
                         help="'separate': write hap1, hap2, unphased BAMs; 'combined': one BAM with HP tags.")
     # LLR knobs
     parser.add_argument('--min_base_quality', type=int, default=20, help='Minimum per-base Q at SNP (default: 20).')
-    parser.add_argument('--min_informative_snps', type=int, default=1, help='Minimum informative SNPs per read (default: 3).')
+    parser.add_argument('--min_informative_snps', type=int, default=1, help='Minimum informative SNPs per read (default: 1).')
     parser.add_argument('--min_log10_odds', type=float, default=3.0, help='Min |log10 odds| to assign hap (default: 6).')
     parser.add_argument('--use_phase_set', action='store_true', default=True, help='Restrict evidence to a single PS block (default: True).')
     parser.add_argument('--no_phase_set', dest='use_phase_set', action='store_false', help='Ignore PS blocks (not recommended).')
@@ -252,11 +252,8 @@ def main():
         writer = output_files[0]  # default target
         if read.is_unmapped or read.reference_name not in snp_pos_map:
             counts['no_overlap'] += 1
-            if args.output_mode == 'combined':
-                # still write combined with no tags
-                writer.write(read)
-            else:
-                writer.write(read)  # goes to unphased BAM
+            read.set_tag('HP', 0, 'i')
+            writer.write(read)  # goes to unphased BAM
             continue
 
         # Quick span check: any phased het SNP possibly overlaps?
@@ -264,10 +261,8 @@ def main():
         next_snp = smallest_larger(chrom_snps, read.reference_start)
         if next_snp > read.reference_end:
             counts['no_overlap'] += 1
-            if args.output_mode == 'combined':
-                writer.write(read)
-            else:
-                writer.write(read)
+            read.set_tag('HP', 0, 'i')
+            writer.write(read)
             continue
 
         hap, n_inf, abs_llr10, ps_val = assign_haplotype_llr(
@@ -312,6 +307,7 @@ def main():
 
         else:
             # unphased (no decision)
+            read.set_tag('HP', 0, 'i')
             if ps_val is not None:
                 read.set_tag('PS', int(ps_val), value_type='i')
             if n_inf > 0:
@@ -343,7 +339,7 @@ def main():
     total = sum(counts.values())
     print("\n✅ Processing complete.")
     print("Read counts:")
-    for k in ['hap1','hap2','conflict','unphased','no_overlap']:
+    for k in ['hap1','hap2','conflict','unphased','ap']:
         v = counts[k]
         frac = (v/total*100.0) if total else 0.0
         print(f"  {k:10s}: {v:10d} ({frac:5.1f}%)")
